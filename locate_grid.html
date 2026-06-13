@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地圖座標定位工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: #1a1a1a;
+            color: #fff;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 10px;
+        }
+        #instructions {
+            margin-bottom: 20px;
+            font-size: 16px;
+            background: #333;
+            padding: 10px 20px;
+            border-radius: 8px;
+            max-width: 800px;
+            text-align: center;
+        }
+        #map-container {
+            position: relative;
+            max-width: 90vw;
+            max-height: 80vh;
+            border: 2px solid #555;
+            display: inline-block;
+        }
+        #map-img {
+            display: block;
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+        }
+        /* Grid overlay */
+        .grid-line-h {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 0, 0, 0.3);
+            pointer-events: none;
+        }
+        .grid-line-v {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255, 0, 0, 0.3);
+            pointer-events: none;
+        }
+        .grid-label {
+            position: absolute;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.8);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px;
+            pointer-events: none;
+            border-radius: 2px;
+        }
+        #coords-display {
+            margin-top: 20px;
+            font-size: 18px;
+            font-family: monospace;
+            background: #222;
+            padding: 10px 20px;
+            border: 1px solid #444;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>地圖座標定位工具</h1>
+    <div id="instructions">
+        請點擊地圖上的名牌（貪吃蛇、公司產品配對、歷史人物填空、中央大門），下方會顯示點擊位置的百分比 (Left% / Top%)。
+    </div>
+    
+    <div id="map-container">
+        <img id="map-img" src="map-bg.png" alt="Map Background">
+        <!-- Grid lines and labels will be inserted here dynamically -->
+    </div>
+    
+    <div id="coords-display">
+        點擊地圖以取得座標...
+    </div>
+
+    <script>
+        const container = document.getElementById('map-container');
+        const img = document.getElementById('map-img');
+        const coordsDisplay = document.getElementById('coords-display');
+
+        // Draw grid once image is loaded to get correct dimensions
+        img.onload = function() {
+            createGrid();
+        };
+        if (img.complete) {
+            createGrid();
+        }
+
+        function createGrid() {
+            // Clear existing grid elements if any
+            const existing = container.querySelectorAll('.grid-line-h, .grid-line-v, .grid-label');
+            existing.forEach(el => el.remove());
+
+            // Add grid lines every 10%
+            for (let i = 10; i < 100; i += 10) {
+                // Horizontal lines
+                const hLine = document.createElement('div');
+                hLine.className = 'grid-line-h';
+                hLine.style.top = i + '%';
+                container.appendChild(hLine);
+
+                const hLabel = document.createElement('div');
+                hLabel.className = 'grid-label';
+                hLabel.style.top = i + '%';
+                hLabel.style.left = '5px';
+                hLabel.innerText = 'Y: ' + i + '%';
+                container.appendChild(hLabel);
+
+                // Vertical lines
+                const vLine = document.createElement('div');
+                vLine.className = 'grid-line-v';
+                vLine.style.left = i + '%';
+                container.appendChild(vLine);
+
+                const vLabel = document.createElement('div');
+                vLabel.className = 'grid-label';
+                vLabel.style.left = i + '%';
+                vLabel.style.top = '5px';
+                vLabel.innerText = 'X: ' + i + '%';
+                container.appendChild(vLabel);
+            }
+        }
+
+        // Window resize also handle
+        window.addEventListener('resize', createGrid);
+
+        container.addEventListener('click', function(e) {
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const xPercent = (x / rect.width * 100).toFixed(2);
+            const yPercent = (y / rect.height * 100).toFixed(2);
+            
+            coordsDisplay.innerHTML = `點擊座標：<strong>left: ${xPercent}%, top: ${yPercent}%</strong>`;
+            console.log(`left: ${xPercent}%, top: ${yPercent}%`);
+        });
+    </script>
+</body>
+</html>

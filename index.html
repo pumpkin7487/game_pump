@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大冒險地圖 - 遠古遺蹟之謎</title>
+    <style>
+        /* CSS RESET & GENERAL STYLES */
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800;900&family=Inter:wght@300;400;600;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #0d0a08;
+            background-image: radial-gradient(circle, #1a1410 0%, #060504 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #e5dfd5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* DEFINE GOLD GRADIENT FOR SVGs */
+        .svg-defs {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+        }
+
+        /* 1. COVER SCREEN */
+        #cover-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('cover.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 8%;
+            cursor: pointer;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        #cover-screen::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle, transparent 40%, rgba(0, 0, 0, 0.6) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .start-prompt {
+            font-family: 'Cinzel', serif;
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6);
+            letter-spacing: 4px;
+            z-index: 2;
+            animation: pulse-glow 2s infinite ease-in-out;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 12px 30px;
+            border-radius: 50px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                opacity: 0.6;
+                transform: scale(0.98);
+                box-shadow: 0 0 10px rgba(255, 215, 0, 0.1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.02);
+                box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+            }
+        }
+
+        /* 2. MAIN MAP CONTAINER */
+        #map-wrapper {
+            position: relative;
+            aspect-ratio: 1672 / 941;
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            max-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
+            border: 2px solid #201812;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        @media (min-aspect-ratio: 1672/941) {
+            #map-wrapper {
+                width: auto;
+                height: 100%;
+            }
+        }
+
+        #map-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        /* HOTSPOTS */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 5;
+            background: rgba(255, 255, 255, 0);
+            border: 1.5px dashed rgba(255, 255, 255, 0);
+        }
+
+        .hotspot:hover {
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.35), inset 0 0 15px rgba(255, 215, 0, 0.15);
+            background: rgba(255, 215, 0, 0.04);
+            border: 1.5px solid rgba(255, 215, 0, 0.25);
+        }
+
+        /* GREEN TICK STAMPS */
+        .stamp-check {
+            position: absolute;
+            top: -16px;
+            right: -16px;
+            width: 32px;
+            height: 32px;
+            background: radial-gradient(circle, #2ecc71, #27ae60);
+            color: #fff;
+            border-radius: 50%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 900;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), 0 0 0 3px #ffffff, 0 0 10px rgba(46, 204, 113, 0.6);
+            transform: rotate(-12deg);
+            z-index: 6;
+            animation: stamp-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes stamp-pop {
+            0% {
+                transform: scale(0) rotate(-45deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(-12deg);
+                opacity: 1;
+            }
+        }
+
+        .hotspot.completed .stamp-check {
+            display: flex;
+        }
+
+        /* 3. INFO PANEL (TOP-RIGHT) */
+        #info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(18, 14, 12, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(255, 215, 0, 0.35);
+            border-radius: 12px;
+            padding: 12px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+            z-index: 15;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+            color: #ffd700;
+            font-family: 'Cinzel', serif;
+        }
+
+        #info-badge-count {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        #info-badge-count:active {
+            transform: scale(0.95);
+        }
+
+        #reset-progress-btn {
+            background: linear-gradient(135deg, #a63024, #7d1c13);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        #reset-progress-btn:hover {
+            background: linear-gradient(135deg, #c0392b, #962d22);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+        
+        #reset-progress-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* 4. DOOR MODAL DIALOG */
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 80;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        #modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        #door-modal {
+            background: #181411;
+            background-image: radial-gradient(circle, #251e19 0%, #15110e 100%);
+            border: 2px solid #b8860b;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(184, 134, 11, 0.2);
+            border-radius: 16px;
+            width: 600px;
+            max-width: 90vw;
+            padding: 30px;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+            color: #e0d9d0;
+        }
+
+        #modal-overlay.active #door-modal {
+            transform: scale(1);
+        }
+
+        #close-modal-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: #a89f91;
+            font-size: 32px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        #close-modal-btn:hover {
+            color: #ffd700;
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 22px;
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .modal-desc {
+            font-size: 14px;
+            color: #a89f91;
+            text-align: center;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* SLOTS SECTION */
+        .slots-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0 35px 0;
+            gap: 15px;
+        }
+
+        .slot-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 100px;
+        }
+
+        .slot {
+            width: 90px;
+            height: 90px;
+            border: 2px dashed rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            background: rgba(10, 8, 7, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .slot::before {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            opacity: 0.12;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            pointer-events: none;
+        }
+
+        .slot[data-type="warrior"]::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='gold' stroke-width='2'%3E%3Cpath d='M12 2v14M9 5h6M10 16h4M12 16v3M11 19h2'/%3E%3C/svg%3E");
+        }
+        .slot[data-type="dynasty"]::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='gold' stroke-width='2'%3E%3Ccircle cx='9' cy='12' r='4'/%3E%3Ccircle cx='15' cy='12' r='4'/%3E%3C/svg%3E");
+        }
+        .slot[data-type="idiom"]::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='gold' stroke-width='2'%3E%3Cpath d='M4 19a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5z'/%3E%3C/svg%3E");
+        }
+
+        .slot.filled {
+            border: 2px solid #ffd700;
+            background: rgba(40, 30, 20, 0.4);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4), inset 0 0 10px rgba(255, 215, 0, 0.2);
+            animation: slot-glow 1.5s infinite ease-in-out alternate;
+        }
+
+        @keyframes slot-glow {
+            from { box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
+            to { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
+        }
+
+        .slot-title {
+            font-size: 12px;
+            color: #a89f91;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        /* BACKPACK AREA */
+        .backpack-header {
+            font-family: 'Cinzel', serif;
+            font-size: 15px;
+            color: #ffd700;
+            margin-top: 10px;
+            margin-bottom: 12px;
+            text-align: center;
+            letter-spacing: 1.5px;
+            border-bottom: 1.5px solid rgba(184, 134, 11, 0.25);
+            padding-bottom: 6px;
+        }
+
+        .backpack-slots {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            min-height: 110px;
+            background: rgba(10, 8, 7, 0.5);
+            border: 1.5px solid rgba(184, 134, 11, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            align-items: center;
+        }
+
+        /* BADGES AND LOCKED SLOTS */
+        .badge {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            cursor: grab;
+            position: relative;
+            z-index: 10;
+            touch-action: none;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .badge:active {
+            cursor: grabbing;
+        }
+
+        .badge-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Tooltip */
+        .badge::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -32px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #ffffff;
+            font-size: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 20;
+        }
+
+        .badge:hover::after {
+            opacity: 1;
+        }
+
+        .badge.snapped::after {
+            display: none;
+        }
+
+        /* Locked Placeholder */
+        .locked-slot {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            border: 1.5px dashed rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: rgba(168, 159, 145, 0.4);
+            gap: 4px;
+        }
+
+        .locked-slot svg {
+            opacity: 0.35;
+        }
+
+        .locked-slot span {
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        /* Hints on door */
+        .hint-bar {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #c0392b;
+            min-height: 18px;
+            font-weight: 600;
+        }
+
+        /* 5. VICTORY SCREEN */
+        #victory-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 8, 7, 0.95);
+            background-image: radial-gradient(circle, #201712 0%, #060504 100%);
+            z-index: 95;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        #victory-screen.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .victory-title {
+            font-family: 'Cinzel', serif;
+            font-size: 48px;
+            font-weight: 900;
+            color: #ffd700;
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 4px 10px rgba(0, 0, 0, 0.8);
+            animation: victory-glow 2s infinite ease-in-out alternate;
+            text-align: center;
+        }
+
+        @keyframes victory-glow {
+            from { text-shadow: 0 0 15px rgba(255, 215, 0, 0.4), 0 4px 10px rgba(0, 0, 0, 0.8); }
+            to { text-shadow: 0 0 35px rgba(255, 215, 0, 0.8), 0 4px 10px rgba(0, 0, 0, 0.8); }
+        }
+
+        .victory-subtitle {
+            font-size: 18px;
+            color: #a89f91;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .time-box {
+            background: rgba(30, 25, 20, 0.6);
+            border: 2px solid #ffd700;
+            border-radius: 12px;
+            padding: 20px 40px;
+            margin-bottom: 50px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(255, 215, 0, 0.1);
+            text-align: center;
+        }
+
+        .time-label {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #a89f91;
+            margin-bottom: 8px;
+        }
+
+        .time-value {
+            font-family: 'Cinzel', serif;
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .victory-btn {
+            background: linear-gradient(135deg, #ffd700, #b8860b);
+            color: #120e0a;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 36px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .victory-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.5);
+        }
+
+        .victory-btn:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SVG DEFS FOR LINEAR GRADIENTS -->
+    <svg class="svg-defs">
+        <defs>
+            <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#fff4b8"/>
+                <stop offset="35%" stop-color="#ffd700"/>
+                <stop offset="100%" stop-color="#8a6d00"/>
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <!-- 1. COVER SCREEN -->
+    <div id="cover-screen" onclick="startAdventure()">
+        <div class="start-prompt">點 擊 啟 程 冒 險</div>
+    </div>
+
+    <!-- 2. MAP & WRAPPER -->
+    <div id="map-wrapper">
+        <img id="map-img" src="map-bg.png" alt="冒險世界地圖">
+        
+        <!-- Top-Right Info Panel (Exactly one place) -->
+        <div id="info-panel">
+            <div id="info-badge-count" onclick="handleCheatClick()">持有印記 0 / 3</div>
+            <button id="reset-progress-btn" onclick="confirmReset()">🔄 清除進度</button>
+        </div>
+
+        <!-- 4 Absolute Hotspots -->
+        <!-- Hotspot 1: 貪吃蛇 -->
+        <div id="hotspot-snake" class="hotspot" style="left: 16.5%; top: 45.5%; width: 15.5%; height: 9.5%;" onclick="navigateToSubgame('../貪吃蛇/index.html')">
+            <div class="stamp-check">✓</div>
+        </div>
+
+        <!-- Hotspot 2: 公司產品配對 -->
+        <div id="hotspot-product" class="hotspot" style="left: 65.5%; top: 46.5%; width: 17.5%; height: 9.5%;" onclick="navigateToSubgame('../公司產品配對/index.html')">
+            <div class="stamp-check">✓</div>
+        </div>
+
+        <!-- Hotspot 3: 歷史人物填空 -->
+        <div id="hotspot-history" class="hotspot" style="left: 17%; top: 84.5%; width: 17.5%; height: 9.5%;" onclick="navigateToSubgame('../歷史人物填空/index.html')">
+            <div class="stamp-check">✓</div>
+        </div>
+
+        <!-- Hotspot 4: 中央大門 -->
+        <div id="hotspot-door" class="hotspot" style="left: 40.5%; top: 69%; width: 19%; height: 11%;" onclick="openDoorModal()">
+        </div>
+    </div>
+
+    <!-- 4. GATE UNLOCK MODAL -->
+    <div id="modal-overlay" onclick="closeDoorModalOuter(event)">
+        <div id="door-modal">
+            <button id="close-modal-btn" onclick="closeDoorModal()">&times;</button>
+            <div class="modal-title">古老遺跡大門</div>
+            <div class="modal-desc">
+                門上刻著三個神聖的凹槽。將背包中的三枚印記拖曳至對應的凹槽，即可打開大門。
+            </div>
+
+            <!-- Slots container -->
+            <div class="slots-container">
+                <div class="slot-wrapper">
+                    <div class="slot" data-type="warrior"></div>
+                    <div class="slot-title">勇氣之印</div>
+                </div>
+                <div class="slot-wrapper">
+                    <div class="slot" data-type="dynasty"></div>
+                    <div class="slot-title">商業之印</div>
+                </div>
+                <div class="slot-wrapper">
+                    <div class="slot" data-type="idiom"></div>
+                    <div class="slot-title">智慧之印</div>
+                </div>
+            </div>
+
+            <div class="backpack-header">冒險者背包</div>
+            
+            <!-- Backpack grid -->
+            <div class="backpack-slots" id="backpack-grid">
+                <!-- Populated dynamically via JS -->
+            </div>
+
+            <div class="hint-bar" id="hint-text"></div>
+        </div>
+    </div>
+
+    <!-- 5. VICTORY SCREEN -->
+    <div id="victory-screen">
+        <h1 class="victory-title">冒險完成！遺蹟大門開啟</h1>
+        <p class="victory-subtitle">恭喜你！成功收集到所有神聖的印記，並順利解鎖大門。古老遺跡的寶藏與秘密已展現在你的眼前！</p>
+        
+        <div class="time-box">
+            <div class="time-label">冒險總花費時間</div>
+            <div class="time-value" id="elapsed-time-display">00 分 00 秒</div>
+        </div>
+
+        <button class="victory-btn" onclick="resetAdventure()">再次冒險</button>
+    </div>
+
+    <!-- JS CODE CONTROLLING ALL STATE -->
+    <script>
+        // STORAGE KEYS
+        const KEY_SNAKE = 'cert_warrior';    // 貪吃蛇
+        const KEY_PRODUCT = 'cert_dynasty';  // 公司產品配對
+        const KEY_HISTORY = 'cert_idiom';    // 歷史人物填空
+        
+        const KEY_START_TIME = 'adventure_start_time';
+        const KEY_COMPLETED = 'adventure_completed';
+        const KEY_COMPLETED_TIME = 'adventure_completion_time';
+
+        // Cheat click counting
+        let cheatCount = 0;
+
+        // On document load
+        window.addEventListener('DOMContentLoaded', () => {
+            // 1. Check if game is already completed
+            if (localStorage.getItem(KEY_COMPLETED) === 'true') {
+                showVictoryScreen(true); // skip animations, show immediately
+                return;
+            }
+
+            // 2. Check opening cover display status (sessionStorage)
+            if (sessionStorage.getItem('adventure_started') === 'true') {
+                const cover = document.getElementById('cover-screen');
+                cover.style.display = 'none';
+                
+                // If started but timer didn't begin, initialize it
+                if (!localStorage.getItem(KEY_START_TIME)) {
+                    localStorage.setItem(KEY_START_TIME, Date.now().toString());
+                }
+            }
+
+            // 3. Update map indicators & info count
+            updateMapState();
+        });
+
+        // Start Adventure (Click cover)
+        function startAdventure() {
+            const cover = document.getElementById('cover-screen');
+            cover.style.opacity = '0';
+            
+            // Register session
+            sessionStorage.setItem('adventure_started', 'true');
+            
+            // Start Timer if not already set
+            if (!localStorage.getItem(KEY_START_TIME)) {
+                localStorage.setItem(KEY_START_TIME, Date.now().toString());
+            }
+
+            // Remove after transition
+            setTimeout(() => {
+                cover.style.display = 'none';
+            }, 800);
+        }
+
+        // Navigate to Subgames
+        function navigateToSubgame(url) {
+            // Keep timer running, just redirect
+            window.location.href = url;
+        }
+
+        // Update levels checkmarks and holdings counter
+        function updateMapState() {
+            let passCount = 0;
+
+            // Snake
+            if (localStorage.getItem(KEY_SNAKE) === 'true') {
+                document.getElementById('hotspot-snake').classList.add('completed');
+                passCount++;
+            } else {
+                document.getElementById('hotspot-snake').classList.remove('completed');
+            }
+
+            // Product Matching
+            if (localStorage.getItem(KEY_PRODUCT) === 'true') {
+                document.getElementById('hotspot-product').classList.add('completed');
+                passCount++;
+            } else {
+                document.getElementById('hotspot-product').classList.remove('completed');
+            }
+
+            // History Fill-in
+            if (localStorage.getItem(KEY_HISTORY) === 'true') {
+                document.getElementById('hotspot-history').classList.add('completed');
+                passCount++;
+            } else {
+                document.getElementById('hotspot-history').classList.remove('completed');
+            }
+
+            // Update panel text
+            document.getElementById('info-badge-count').innerText = `持有印記 ${passCount} / 3`;
+        }
+
+        // Reset progress function (with confirmation)
+        function confirmReset() {
+            const confirmVal = confirm('確定要清除所有冒險進度嗎？這將會重置所有通關記錄與計時！');
+            if (confirmVal) {
+                localStorage.clear();
+                sessionStorage.clear();
+                window.location.reload();
+            }
+        }
+
+        // Re-adventure button from victory screen
+        function resetAdventure() {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.reload();
+        }
+
+        // Handle testing/cheat clicks (Click "Holdings X / 3" five times)
+        function handleCheatClick() {
+            cheatCount++;
+            if (cheatCount >= 5) {
+                localStorage.setItem(KEY_SNAKE, 'true');
+                localStorage.setItem(KEY_PRODUCT, 'true');
+                localStorage.setItem(KEY_HISTORY, 'true');
+                alert('開發者測試模式已啟用！已解鎖所有關卡印記。');
+                cheatCount = 0;
+                updateMapState();
+                
+                // Set start time if not existing so timer makes sense
+                if (!localStorage.getItem(KEY_START_TIME)) {
+                    localStorage.setItem(KEY_START_TIME, (Date.now() - 60000).toString()); // 1 min ago
+                }
+            }
+        }
+
+        /* DOOR MODAL AND DRAG DROP LOGIC */
+        function openDoorModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.add('active');
+            
+            // Generate backpack items
+            renderBackpack();
+            
+            // Initialize slot snapping states
+            clearSlots();
+            
+            // Set up pointer-events listeners for badges
+            initDragDrop();
+        }
+
+        function closeDoorModal() {
+            const overlay = document.getElementById('modal-overlay');
+            overlay.classList.remove('active');
+        }
+
+        function closeDoorModalOuter(e) {
+            if (e.target === document.getElementById('modal-overlay')) {
+                closeDoorModal();
+            }
+        }
+
+        function clearSlots() {
+            document.querySelectorAll('.slot').forEach(slot => {
+                slot.innerHTML = '';
+                slot.classList.remove('filled');
+            });
+            document.getElementById('hint-text').innerText = '';
+        }
+
+        function renderBackpack() {
+            const grid = document.getElementById('backpack-grid');
+            grid.innerHTML = '';
+            
+            const badgesData = [
+                { key: KEY_SNAKE, type: 'warrior', label: '勇氣印記', tooltip: '勇氣印記 (貪吃蛇)', color: '#1b4d22', border: '#27ae60', icon: 'M50 20 L50 70 M40 35 L60 35 M45 70 L55 70 M50 70 L50 80 M42 80 L58 80' },
+                { key: KEY_PRODUCT, type: 'dynasty', label: '商業印記', tooltip: '商業印記 (公司產品配對)', color: '#1b365d', border: '#2980b9', icon: 'circle-pair' },
+                { key: KEY_HISTORY, type: 'idiom', label: '智慧印記', tooltip: '智慧印記 (歷史人物填空)', color: '#78281f', border: '#c0392b', icon: 'M30 35 L45 30 L50 35 L55 30 L70 35 L70 70 L50 65 L30 70 Z M50 35 L50 65' }
+            ];
+
+            let unlockedCount = 0;
+
+            badgesData.forEach(item => {
+                const isUnlocked = localStorage.getItem(item.key) === 'true';
+                if (isUnlocked) {
+                    unlockedCount++;
+                    const badgeDiv = document.createElement('div');
+                    badgeDiv.className = 'badge';
+                    badgeDiv.setAttribute('data-type', item.type);
+                    badgeDiv.setAttribute('data-tooltip', item.tooltip);
+                    
+                    let iconContent = '';
+                    if (item.icon === 'circle-pair') {
+                        iconContent = `<circle cx="41" cy="50" r="13" stroke="%23ffd700" stroke-width="4" fill="none"/%3E%3Ccircle cx="59" cy="50" r="13" stroke="%23ffd700" stroke-width="4" fill="none"/%3E`;
+                        badgeDiv.innerHTML = `
+                            <svg class="badge-svg" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="46" fill="url(%23gold-grad)" stroke="%23b8860b" stroke-width="2"/>
+                                <circle cx="50" cy="50" r="41" fill="${item.color}" stroke="${item.border}" stroke-width="2"/>
+                                <circle cx="42" cy="50" r="13" stroke="%23ffd700" stroke-width="3.5" fill="none"/>
+                                <circle cx="58" cy="50" r="13" stroke="%23ffd700" stroke-width="3.5" fill="none"/>
+                            </svg>
+                        `;
+                    } else {
+                        badgeDiv.innerHTML = `
+                            <svg class="badge-svg" viewBox="0 0 100 100">
+                                <circle cx="50" cy="50" r="46" fill="url(%23gold-grad)" stroke="%23b8860b" stroke-width="2"/>
+                                <circle cx="50" cy="50" r="41" fill="${item.color}" stroke="${item.border}" stroke-width="2"/>
+                                <path d="${item.icon}" stroke="%23ffd700" stroke-width="4" stroke-linecap="round" fill="none" stroke-linejoin="round"/>
+                            </svg>
+                        `;
+                    }
+                    grid.appendChild(badgeDiv);
+                } else {
+                    // Render locked placeholder
+                    const lockedDiv = document.createElement('div');
+                    lockedDiv.className = 'locked-slot';
+                    lockedDiv.innerHTML = `
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <span>未獲得</span>
+                    `;
+                    grid.appendChild(lockedDiv);
+                }
+            });
+
+            const hint = document.getElementById('hint-text');
+            if (unlockedCount < 3) {
+                hint.style.color = '#c0392b';
+                hint.innerText = `大門緊閉...目前還缺少 ${3 - unlockedCount} 個印記，挑戰地圖上的關卡以取得它們！`;
+            } else {
+                hint.style.color = '#27ae60';
+                hint.innerText = '你已持有所有神聖印記！請將它們拖曳放上凹槽解鎖大門。';
+            }
+        }
+
+        // DRAG AND DROP ENGINE USING POINTEREVENTS (Desktop & Tablet Touch Friendly)
+        let activeDrag = null;
+        let dragStartX = 0;
+        let dragStartY = 0;
+
+        function initDragDrop() {
+            const badges = document.querySelectorAll('.badge');
+            badges.forEach(badge => {
+                badge.addEventListener('pointerdown', handlePointerDown);
+            });
+        }
+
+        function handlePointerDown(e) {
+            // Left click only for mouse
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            
+            const badge = e.currentTarget;
+            if (badge.classList.contains('snapped')) return;
+
+            activeDrag = badge;
+            badge.setPointerCapture(e.pointerId);
+            
+            // Save pointer position
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            
+            // Prepare styles
+            badge.style.transition = 'none';
+            badge.style.zIndex = '1000';
+            
+            badge.addEventListener('pointermove', handlePointerMove);
+            badge.addEventListener('pointerup', handlePointerUp);
+            badge.addEventListener('pointercancel', handlePointerUp);
+        }
+
+        function handlePointerMove(e) {
+            if (activeDrag !== e.currentTarget) return;
+            const badge = activeDrag;
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+            
+            // Translate the element
+            badge.style.transform = `translate(${dx}px, ${dy}px) scale(1.08)`;
+        }
+
+        function handlePointerUp(e) {
+            if (activeDrag !== e.currentTarget) return;
+            const badge = activeDrag;
+            
+            badge.removeEventListener('pointermove', handlePointerMove);
+            badge.removeEventListener('pointerup', handlePointerUp);
+            badge.removeEventListener('pointercancel', handlePointerUp);
+            badge.releasePointerCapture(e.pointerId);
+            
+            activeDrag = null;
+
+            // Check overlap with its specific slot
+            const type = badge.getAttribute('data-type');
+            const slot = document.querySelector(`.slot[data-type="${type}"]`);
+            
+            if (slot && isOverlapping(badge, slot)) {
+                snapBadge(badge, slot);
+            } else {
+                returnToBackpack(badge);
+            }
+        }
+
+        function isOverlapping(badge, slot) {
+            const badgeRect = badge.getBoundingClientRect();
+            const slotRect = slot.getBoundingClientRect();
+            
+            const badgeCenterX = badgeRect.left + badgeRect.width / 2;
+            const badgeCenterY = badgeRect.top + badgeRect.height / 2;
+            
+            return (
+                badgeCenterX >= slotRect.left &&
+                badgeCenterX <= slotRect.right &&
+                badgeCenterY >= slotRect.top &&
+                badgeCenterY <= slotRect.bottom
+            );
+        }
+
+        function snapBadge(badge, slot) {
+            // Append to the slot DOM to center it
+            slot.appendChild(badge);
+            
+            // Clear inline offsets
+            badge.style.transform = 'none';
+            badge.style.position = 'relative';
+            badge.style.zIndex = '1';
+            badge.classList.add('snapped');
+            slot.classList.add('filled');
+            
+            // Remove listeners
+            badge.removeEventListener('pointerdown', handlePointerDown);
+            
+            // Trigger check
+            checkSuccess();
+        }
+
+        function returnToBackpack(badge) {
+            badge.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)';
+            badge.style.transform = 'translate(0px, 0px)';
+            badge.style.zIndex = '10';
+        }
+
+        function checkSuccess() {
+            const filledSlots = document.querySelectorAll('.slot.filled');
+            if (filledSlots.length === 3) {
+                // Success! Delay slightly for snaps to register visually
+                setTimeout(() => {
+                    closeDoorModal();
+                    triggerVictory();
+                }, 600);
+            }
+        }
+
+        /* VICTORY & TIME FLOW */
+        function triggerVictory() {
+            // 1. Calculate time
+            const startTimeStr = localStorage.getItem(KEY_START_TIME);
+            const startTime = startTimeStr ? parseInt(startTimeStr) : Date.now();
+            const elapsed = Date.now() - startTime;
+            
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            
+            const formattedTime = `${minutes.toString().padStart(2, '0')} 分 ${seconds.toString().padStart(2, '0')} 秒`;
+            
+            // 2. Save state
+            localStorage.setItem(KEY_COMPLETED, 'true');
+            localStorage.setItem(KEY_COMPLETED_TIME, formattedTime);
+            
+            // 3. Display
+            showVictoryScreen(false);
+        }
+
+        function showVictoryScreen(immediate = false) {
+            const victoryScreen = document.getElementById('victory-screen');
+            const timeDisplay = document.getElementById('elapsed-time-display');
+            
+            const savedTime = localStorage.getItem(KEY_COMPLETED_TIME) || '00 分 00 秒';
+            timeDisplay.innerText = savedTime;
+            
+            if (immediate) {
+                victoryScreen.style.display = 'flex';
+                victoryScreen.style.opacity = '1';
+                victoryScreen.classList.add('active');
+            } else {
+                victoryScreen.style.display = 'flex';
+                // Trigger CSS transitions
+                setTimeout(() => {
+                    victoryScreen.style.opacity = '1';
+                    victoryScreen.classList.add('active');
+                }, 50);
+            }
+        }
+    </script>
+</body>
+</html>
