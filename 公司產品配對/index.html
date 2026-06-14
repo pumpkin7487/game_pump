@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣上市櫃公司與主要產品配對遊戲</title>
+    <meta name="description" content="商學與投資教育工具：台灣上市櫃公司與核心業務產品配對遊戲，採用財經科技風設計，支援觸控點擊與拖曳雙操作。">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0b0f19;    /* 深藍科技黑 */
+            --bg-card: #131a2c;       /* 科技藍深卡 */
+            --bg-company: #f1f5f9;    /* 公司格大理石灰白 */
+            --color-gold: #d4af37;    /* 經典財經金 */
+            --color-gold-rgb: 212, 175, 55;
+            --color-cyan: #00f0ff;    /* 科技青藍 */
+            --color-cyan-rgb: 0, 240, 255;
+            --color-green: #10b981;   /* 安全綠 */
+            --color-red: #ef4444;     /* 警告紅 */
+            --text-light: #f8fafc;
+            --text-dark: #0f172a;
+            --text-secondary: #94a3b8;
+            --border: 1px solid rgba(255, 255, 255, 0.08);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-light);
+            font-family: 'Outfit', 'Noto Sans TC', -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Ambient subtle grid backdrop */
+        .ambient-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(var(--color-cyan-rgb), 0.04) 0%, rgba(var(--color-cyan-rgb), 0) 70%);
+            filter: blur(60px);
+            z-index: -1;
+            top: 10%;
+            right: 5%;
+            pointer-events: none;
+        }
+
+        header {
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--color-cyan);
+            padding: 1.25rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .title-group h1 {
+            font-size: 1.6rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--color-cyan), var(--color-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* Top panel scoreboard */
+        .dashboard {
+            display: flex;
+            gap: 1.25rem;
+            align-items: center;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(var(--color-cyan-rgb), 0.2);
+            border-radius: 10px;
+            padding: 0.4rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 80px;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.15rem;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--color-cyan);
+            text-shadow: 0 0 8px rgba(var(--color-cyan-rgb), 0.4);
+        }
+
+        .sound-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sound-toggle:hover {
+            color: var(--color-cyan);
+            background: rgba(255,255,255,0.03);
+        }
+
+        .btn-reset {
+            background: transparent;
+            border: 1px solid var(--color-gold);
+            color: var(--color-gold);
+            padding: 0.45rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: var(--transition);
+            font-family: inherit;
+        }
+
+        .btn-reset:hover {
+            background: var(--color-gold);
+            color: var(--bg-primary);
+            box-shadow: 0 0 12px rgba(var(--color-gold-rgb), 0.3);
+        }
+
+        /* Layout Grid */
+        main {
+            max-width: 1200px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 2rem;
+            flex-grow: 1;
+        }
+
+        /* Left side: Company Boxes */
+        .company-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .company-box {
+            background: var(--bg-card);
+            border: 1px solid rgba(var(--color-cyan-rgb), 0.2);
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: var(--transition);
+            min-height: 250px;
+        }
+
+        .company-box.drag-over {
+            border-color: var(--color-cyan);
+            box-shadow: 0 0 20px rgba(var(--color-cyan-rgb), 0.3);
+            transform: scale(1.01);
+        }
+
+        .company-header {
+            background: var(--bg-company);
+            color: var(--text-dark);
+            padding: 0.9rem;
+            text-align: center;
+            font-weight: 900;
+            font-size: 1.15rem;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--color-gold);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* Products Drop Zone inside company */
+        .drop-zone {
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-content: flex-start;
+            flex-grow: 1;
+            position: relative;
+            background: rgba(19, 26, 44, 0.4);
+            min-height: 160px;
+        }
+
+        .drop-zone-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-secondary);
+            opacity: 0.25;
+            font-size: 0.85rem;
+            pointer-events: none;
+            letter-spacing: 0.5px;
+            text-align: center;
+            width: 85%;
+        }
+
+        /* Right side: Event Cards Bank */
+        .products-panel {
+            background: var(--bg-card);
+            border: 1px dashed rgba(var(--color-cyan-rgb), 0.3);
+            border-radius: 20px;
+            padding: 1.5rem 1rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            max-height: 80vh;
+            position: sticky;
+            top: 110px;
+        }
+
+        .panel-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--color-gold);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .products-bank {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 0.3rem;
+        }
+
+        .products-bank::-webkit-scrollbar {
+            width: 5px;
+        }
+        .products-bank::-webkit-scrollbar-thumb {
+            background-color: rgba(var(--color-cyan-rgb), 0.4);
+            border-radius: 3px;
+        }
+        .products-bank::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.15);
+        }
+
+        /* Product Cards */
+        .product-card {
+            background: #192235;
+            border: 1px solid rgba(var(--color-cyan-rgb), 0.3);
+            border-left: 4px solid var(--color-cyan);
+            border-radius: 8px;
+            padding: 0.65rem 0.85rem;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .product-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--color-gold);
+            background: #202b44;
+            box-shadow: 0 4px 12px rgba(var(--color-cyan-rgb), 0.15);
+        }
+
+        .product-card:active {
+            cursor: grabbing;
+        }
+
+        /* Selection styling for click-to-select mobile fallback */
+        .product-card.selected {
+            border-color: var(--color-gold);
+            background: #293857;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+            animation: pulse-selection 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-selection {
+            0% { border-color: var(--color-cyan); }
+            100% { border-color: var(--color-gold); }
+        }
+
+        .product-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .product-text {
+            font-weight: 500;
+            line-height: 1.3;
+        }
+
+        /* Nested Correctly Matched Pill inside Drop Zone */
+        .product-card.matched {
+            cursor: default;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.6rem;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--color-green);
+            border-left: 3px solid var(--color-green);
+            box-shadow: none;
+            width: auto;
+            flex-grow: 1;
+            margin: 1px;
+        }
+        
+        .product-card.matched:hover {
+            transform: none;
+            box-shadow: none;
+            background: rgba(16, 185, 129, 0.15);
+            border-color: var(--color-green);
+        }
+
+        .dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
+        }
+
+        /* Error pulse flash styling */
+        @keyframes flash-red-shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+        }
+
+        .flash-error {
+            animation: flash-red-shake 0.3s ease-in-out;
+            border-color: var(--color-red) !important;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.7) !important;
+            background: #2b181e !important;
+        }
+
+        /* Victory Popup Screen */
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 15, 25, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 100;
+        }
+
+        .victory-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .victory-card {
+            background: var(--bg-card);
+            border: 2px solid var(--color-gold);
+            border-radius: 24px;
+            padding: 3.5rem 2rem;
+            max-width: 440px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(var(--color-gold-rgb), 0.3);
+            transform: scale(0.9);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .victory-overlay.active .victory-card {
+            transform: scale(1);
+            box-shadow: 0 0 45px rgba(0, 240, 255, 0.2);
+        }
+
+        .victory-trophy {
+            font-size: 3rem;
+            margin-bottom: 1.2rem;
+            animation: bounce 2.5s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .victory-card h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--color-gold), var(--color-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+            letter-spacing: 0.5px;
+        }
+
+        .victory-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .victory-stats {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(var(--color-cyan-rgb), 0.15);
+            border-radius: 16px;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .victory-stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .v-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .v-val {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--color-cyan);
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+            border: none;
+            border-radius: 12px;
+            padding: 0.95rem;
+            color: var(--text-dark);
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(var(--color-gold-rgb), 0.25);
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(var(--color-gold-rgb), 0.45);
+        }
+
+        /* Sparkle elements generated in victory screen */
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--color-gold);
+            border-radius: 50%;
+            animation: drop-fall 2.8s infinite linear;
+        }
+
+        @keyframes drop-fall {
+            0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(380px) rotate(360deg); opacity: 0; }
+        }
+
+        /* RWD adjustments */
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+                margin: 1rem auto;
+            }
+
+            .products-panel {
+                position: relative;
+                top: 0;
+                max-height: 180px;
+                border-style: solid;
+                border-color: var(--color-gold);
+                border-width: 1px 0;
+                border-radius: 0;
+                margin: 0 -1.5rem;
+                padding: 0.8rem 1rem;
+            }
+
+            .panel-header {
+                font-size: 0.95rem;
+                margin-bottom: 0.4rem;
+                padding-bottom: 0.2rem;
+            }
+
+            .products-bank {
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+                gap: 0.65rem;
+                white-space: nowrap;
+                padding: 0.2rem 0;
+            }
+
+            .product-card {
+                display: inline-flex;
+                flex-shrink: 0;
+                width: 185px;
+                white-space: normal;
+                font-size: 0.85rem;
+                padding: 0.45rem 0.75rem;
+            }
+        }
+
+        /* Back to Map Button */
+        .back-to-map {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            background: transparent;
+            border: 1px solid var(--color-cyan);
+            color: var(--color-cyan);
+            padding: 0.45rem 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: var(--transition);
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        .back-to-map:hover {
+            background: var(--color-cyan);
+            color: var(--bg-primary);
+            box-shadow: 0 0 12px rgba(var(--color-cyan-rgb), 0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-grid"></div>
+    <div class="ambient-glow"></div>
+
+    <!-- Header bar -->
+    <header>
+        <div class="header-container">
+            <a href="../大冒險地圖/index.html" class="back-to-map">← 回到大地圖</a>
+            <div class="title-group">
+                <h1>上市櫃公司產品配對</h1>
+                <div class="subtitle">將右側產品/核心業務拖曳（或點點配對）至左側對應公司</div>
+            </div>
+
+            <div class="dashboard">
+                <button class="sound-toggle" id="soundToggle" title="切換音效">
+                    <span id="soundIcon">🔊</span>
+                </button>
+                <div class="stat-card">
+                    <span class="stat-label">累積嘗試</span>
+                    <span class="stat-value" id="attemptCount">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">配對進度</span>
+                    <span class="stat-value" id="matchCount">0 / 16</span>
+                </div>
+                <button class="btn-reset" id="btnReset">重新開始</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Grid Content -->
+    <main>
+        <!-- Company Boxes Grid (Left) -->
+        <div class="company-grid" id="companyGrid">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Product Cards Pool (Right/Bottom) -->
+        <div class="products-panel">
+            <div class="panel-header">💼 核心業務/產品池</div>
+            <div class="products-bank" id="productsBank">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Victory Overlay -->
+    <div class="victory-overlay" id="victoryOverlay">
+        <div class="victory-card" id="victoryCard">
+            <div class="victory-trophy">📊</div>
+            <h2>投資分析達人！</h2>
+            <p>恭喜您成功釐清所有上市櫃公司的核心產品與業務範疇！</p>
+            <div style="color: var(--color-cyan); font-weight: 800; font-size: 1.1rem; margin-bottom: 1.5rem; text-shadow: 0 0 5px var(--color-cyan);">
+                🏆 成功獲得「配對之印」憑證！
+            </div>
+            <div class="victory-stats">
+                <div class="victory-stat-box">
+                    <span class="v-label">嘗試次數</span>
+                    <span class="v-val" id="finalAttempts">0</span>
+                </div>
+                <div class="victory-stat-box">
+                    <span class="v-label">業務熟悉度</span>
+                    <span class="v-val">100%</span>
+                </div>
+            </div>
+            <button class="btn-restart" id="btnRestart">再玩一次</button>
+        </div>
+    </div>
+
+    <!-- Javascript Logical Code -->
+    <script>
+        // Company & Product Arrays Data
+        const companies = [
+            { id: 1, name: "台積電 (2330)" },
+            { id: 2, name: "鴻海 (2317)" },
+            { id: 3, name: "聯發科 (2454)" },
+            { id: 4, name: "長榮海運 (2603)" },
+            { id: 5, name: "台塑 (1301)" },
+            { id: 6, name: "中華電信 (2412)" }
+        ];
+
+        const products = [
+            { id: 'p1',  company_id: 1, text: "3奈米/5奈米先進製程", icon: "🔬" },
+            { id: 'p2',  company_id: 1, text: "CoWoS 先進封裝",     icon: "📦" },
+            { id: 'p3',  company_id: 1, text: "晶圓代工 (Foundry)",  icon: "⭕" },
+            { id: 'p4',  company_id: 2, text: "iPhone 手機組裝代工",  icon: "📱" },
+            { id: 'p5',  company_id: 2, text: "AI 伺服器機櫃與組裝",  icon: "🖥️" },
+            { id: 'p6',  company_id: 2, text: "電動車開放平台 (MIH)", icon: "🚗" },
+            { id: 'p7',  company_id: 3, text: "天璣系列手機晶片",     icon: "⚡" },
+            { id: 'p8',  company_id: 3, text: "電視與物聯網晶片",     icon: "📺" },
+            { id: 'p9',  company_id: 3, text: "5G 行動通訊數據機",   icon: "📡" },
+            { id: 'p10', company_id: 4, text: "遠洋貨櫃航運運輸",     icon: "🚢" },
+            { id: 'p11', company_id: 4, text: "貨櫃碼頭裝卸業務",     icon: "⚓" },
+            { id: 'p12', company_id: 5, text: "聚氯乙烯 (PVC) 塑膠粒", icon: "🧪" },
+            { id: 'p13', company_id: 5, text: "燒鹼與液氯化學品",     icon: "⚗️" },
+            { id: 'p14', company_id: 6, text: "4G/5G 行動通訊資費",   icon: "📶" },
+            { id: 'p15', company_id: 6, text: "HiNet 光世代固網寬頻", icon: "🌐" },
+            { id: 'p16', company_id: 6, text: "MOD 多媒體電視平台",  icon: "📺" }
+        ];
+
+        // Game state variables
+        let attempts = 0;
+        let matchedCount = 0;
+        let selectedProductCard = null;
+        let isSoundEnabled = true;
+
+        // Sound Synthesis Setup (Web Audio API)
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!isSoundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            switch (type) {
+                case 'select':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(600, now);
+                    gain.gain.setValueAtTime(0.04, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                    break;
+                case 'correct':
+                    // High tech double ping (sine wave sweep)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(659.25, now); // E5
+                    osc.frequency.setValueAtTime(987.77, now + 0.05); // B5
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.setValueAtTime(0.05, now + 0.05);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                    break;
+                case 'wrong':
+                    // Low buzz error
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.linearRampToValueAtTime(80, now + 0.15);
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.16);
+                    osc.start(now);
+                    osc.stop(now + 0.16);
+                    break;
+                case 'victory':
+                    // Upward tech melody
+                    const notes = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+                    const noteDur = 0.06;
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * noteDur);
+                        
+                        noteGain.gain.setValueAtTime(0.05, now + idx * noteDur);
+                        noteGain.gain.linearRampToValueAtTime(0.001, now + (idx + 1) * noteDur + 0.05);
+                        
+                        noteOsc.start(now + idx * noteDur);
+                        noteOsc.stop(now + (idx + 1) * noteDur + 0.05);
+                    });
+                    break;
+            }
+        }
+
+        // DOM Elements links
+        const companyGrid = document.getElementById('companyGrid');
+        const productsBank = document.getElementById('productsBank');
+        const attemptCount = document.getElementById('attemptCount');
+        const matchCount = document.getElementById('matchCount');
+        const victoryOverlay = document.getElementById('victoryOverlay');
+        const finalAttempts = document.getElementById('finalAttempts');
+        
+        const btnReset = document.getElementById('btnReset');
+        const btnRestart = document.getElementById('btnRestart');
+        const soundToggle = document.getElementById('soundToggle');
+        const soundIcon = document.getElementById('soundIcon');
+
+        // Toggle Sound Click Listener
+        soundToggle.addEventListener('click', () => {
+            isSoundEnabled = !isSoundEnabled;
+            if (isSoundEnabled) {
+                soundIcon.textContent = '🔊';
+                initAudio();
+            } else {
+                soundIcon.textContent = '🔇';
+            }
+        });
+
+        // Initialize Game State
+        function initGame() {
+            attempts = 0;
+            matchedCount = 0;
+            selectedProductCard = null;
+            attemptCount.textContent = '0';
+            matchCount.textContent = `0 / ${products.length}`;
+            victoryOverlay.classList.remove('active');
+            
+            // Clear lists
+            companyGrid.innerHTML = '';
+            productsBank.innerHTML = '';
+
+            // 1. Create Company Boxes
+            companies.forEach(company => {
+                const box = document.createElement('div');
+                box.classList.add('company-box');
+                box.dataset.id = company.id;
+
+                const header = document.createElement('div');
+                header.classList.add('company-header');
+                header.textContent = company.name;
+                box.appendChild(header);
+
+                const dropZone = document.createElement('div');
+                dropZone.classList.add('drop-zone');
+                dropZone.dataset.id = company.id;
+
+                const placeholder = document.createElement('div');
+                placeholder.classList.add('drop-zone-placeholder');
+                placeholder.textContent = "可拖曳/點擊業務至此";
+                dropZone.appendChild(placeholder);
+
+                // Drag Events
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                });
+                dropZone.addEventListener('dragenter', (e) => {
+                    e.preventDefault();
+                    box.classList.add('drag-over');
+                });
+                dropZone.addEventListener('dragleave', () => {
+                    box.classList.remove('drag-over');
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    box.classList.remove('drag-over');
+                    const productId = e.dataTransfer.getData('text/plain');
+                    handleMatchAttempt(productId, company.id, dropZone);
+                });
+
+                // Touch/Mobile click selection fallback
+                dropZone.addEventListener('click', () => {
+                    if (selectedProductCard) {
+                        const productId = selectedProductCard.dataset.id;
+                        const success = handleMatchAttempt(productId, company.id, dropZone);
+                        if (success) {
+                            deselectProductCard();
+                        }
+                    }
+                });
+
+                box.appendChild(dropZone);
+                companyGrid.appendChild(box);
+            });
+
+            // 2. Shuffle & Generate Product Cards
+            const shuffledProducts = [...products].sort(() => Math.random() - 0.5);
+            shuffledProducts.forEach(prod => {
+                const prodCard = document.createElement('div');
+                prodCard.classList.add('product-card');
+                prodCard.id = prod.id;
+                prodCard.dataset.id = prod.id;
+                prodCard.draggable = true;
+
+                const icon = document.createElement('span');
+                icon.classList.add('product-icon');
+                icon.textContent = prod.icon;
+                prodCard.appendChild(icon);
+
+                const text = document.createElement('span');
+                text.classList.add('product-text');
+                text.textContent = prod.text;
+                prodCard.appendChild(text);
+
+                // Drag Listeners
+                prodCard.addEventListener('dragstart', (e) => {
+                    initAudio();
+                    prodCard.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', prod.id);
+                    deselectProductCard();
+                });
+
+                prodCard.addEventListener('dragend', () => {
+                    prodCard.classList.remove('dragging');
+                });
+
+                // Click Select Listener
+                prodCard.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    initAudio();
+                    
+                    if (selectedProductCard === prodCard) {
+                        deselectProductCard();
+                    } else {
+                        if (selectedProductCard) {
+                            selectedProductCard.classList.remove('selected');
+                        }
+                        selectedProductCard = prodCard;
+                        prodCard.classList.add('selected');
+                        playSound('select');
+                    }
+                });
+
+                productsBank.appendChild(prodCard);
+            });
+        }
+
+        // Deselect Clicked Card
+        function deselectProductCard() {
+            if (selectedProductCard) {
+                selectedProductCard.classList.remove('selected');
+                selectedProductCard = null;
+            }
+        }
+
+        // Global click deselection
+        document.body.addEventListener('click', () => {
+            deselectProductCard();
+        });
+
+        // Evaluate Match Action
+        function handleMatchAttempt(productId, targetCompanyId, dropZoneEl) {
+            const prodData = products.find(p => p.id === productId);
+            const cardEl = document.getElementById(productId);
+            
+            if (!prodData || !cardEl || cardEl.classList.contains('matched')) return false;
+
+            attempts++;
+            attemptCount.textContent = attempts;
+
+            if (prodData.company_id === parseInt(targetCompanyId)) {
+                matchedCount++;
+                matchCount.textContent = `${matchedCount} / ${products.length}`;
+                playSound('correct');
+
+                // Update styling & lock in state
+                cardEl.classList.add('matched');
+                cardEl.classList.remove('selected');
+                cardEl.draggable = false;
+                
+                // Hide placeholder
+                const placeholder = dropZoneEl.querySelector('.drop-zone-placeholder');
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
+
+                // Place pill inside dropzone grid
+                dropZoneEl.appendChild(cardEl);
+
+                // Check Win
+                if (matchedCount === products.length) {
+                    triggerVictory();
+                }
+                return true;
+            } else {
+                // Incorrect match: Shake & Red flash effect
+                playSound('wrong');
+                cardEl.classList.add('flash-error');
+                setTimeout(() => {
+                    cardEl.classList.remove('flash-error');
+                }, 300);
+                return false;
+            }
+        }
+
+        // Display Victory Card with gold falling stars
+        function triggerVictory() {
+            playSound('victory');
+            finalAttempts.textContent = attempts;
+            localStorage.setItem('cert_dynasty', 'true');
+            
+            // Spawn gold falling dots
+            const card = document.getElementById('victoryCard');
+            for (let i = 0; i < 40; i++) {
+                const sp = document.createElement('div');
+                sp.classList.add('sparkle');
+                sp.style.left = Math.random() * 100 + '%';
+                sp.style.top = -10 - Math.random() * 50 + 'px';
+                sp.style.animationDelay = Math.random() * 2.2 + 's';
+                sp.style.background = Math.random() > 0.5 ? '#d4af37' : '#00f0ff';
+                card.appendChild(sp);
+            }
+
+            setTimeout(() => {
+                victoryOverlay.classList.add('active');
+            }, 600);
+        }
+
+        btnReset.addEventListener('click', initGame);
+        btnRestart.addEventListener('click', initGame);
+
+        // Run setup
+        initGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Ignore everything by default
+*
+
+# Allow the specific directories and files we need
+!大冒險地圖/
+!大冒險地圖/**
+!貪吃蛇/
+!貪吃蛇/**
+!公司產品配對/
+!公司產品配對/**
+!歷史人物填空/
+!歷史人物填空/**
+!index.html
+!.gitignore

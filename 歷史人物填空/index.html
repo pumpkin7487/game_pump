@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣歷史人物填空遊戲</title>
+    <meta name="description" content="歷史教學工具：台灣歷史人物填空遊戲，書卷字帖風格設計，支援拖曳與點擊操作，融入紅章蓋印與語音音效。">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-paper: #f6f1e5;       /* 宣紙微黃 */
+            --bg-body: #e9e0cb;        /* 古典雅緻底 */
+            --color-ink: #1c1c1c;       /* 徽墨黑 */
+            --color-stamp: #a93226;     /* 印章朱砂紅 */
+            --color-stamp-rgb: 169, 50, 38;
+            --color-green: #27ae60;     /* 竹葉綠 */
+            --color-gold: #d4af37;      /* 描金 */
+            --border-ink: 2px solid var(--color-ink);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--color-ink);
+            font-family: 'Noto Serif TC', serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+            background-image: 
+                radial-gradient(var(--bg-paper) 30%, transparent 31%),
+                radial-gradient(var(--bg-paper) 30%, transparent 31%);
+            background-size: 4px 4px;
+            background-position: 0 0, 2px 2px;
+        }
+
+        /* Classical paper board border pattern */
+        .page-frame {
+            border: 15px solid transparent;
+            border-image: linear-gradient(to bottom, #8a1f11, #5d0f05) 15;
+            background: var(--bg-paper);
+            box-shadow: 0 10px 30px rgba(44, 26, 26, 0.25);
+            max-width: 780px;
+            width: 92%;
+            margin: 2rem auto;
+            padding: 2.5rem 2rem;
+            position: relative;
+            border-radius: 4px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Bar styling */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px double var(--color-stamp);
+            padding-bottom: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .title-area h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--color-stamp);
+            letter-spacing: 2px;
+            text-shadow: 0.5px 0.5px 1px rgba(0,0,0,0.1);
+        }
+
+        .title-area .sub {
+            font-size: 0.85rem;
+            color: var(--color-ink);
+            opacity: 0.7;
+            margin-top: 0.25rem;
+            letter-spacing: 1px;
+        }
+
+        /* Sound & Progress Stats */
+        .dash-controls {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .sound-btn {
+            background: none;
+            border: none;
+            color: var(--color-stamp);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .sound-btn:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .progress-box {
+            background: #fdfaf3;
+            border: 1px solid rgba(var(--color-stamp-rgb), 0.3);
+            border-radius: 6px;
+            padding: 0.3rem 0.8rem;
+            font-weight: 700;
+            color: var(--color-stamp);
+            font-size: 0.95rem;
+        }
+
+        /* Figure Puzzle Box */
+        .puzzle-display-wrapper {
+            background: #fffdf9;
+            border: 1px solid rgba(var(--color-stamp-rgb), 0.2);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.02);
+            position: relative;
+        }
+
+        .name-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Regular Calligraphy characters */
+        .char-box {
+            width: 75px;
+            height: 75px;
+            background: var(--bg-paper);
+            border: 1px solid rgba(26, 26, 26, 0.15);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--color-ink);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+        }
+
+        /* Calligraphy Empty Practice Grid (米字格) */
+        .slot-box {
+            width: 75px;
+            height: 75px;
+            border: 2px solid var(--color-stamp);
+            border-radius: 8px;
+            background-color: #fffdfa;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--color-stamp);
+            cursor: pointer;
+            transition: var(--transition);
+            /* Classical red grid diagonals background */
+            background-image: 
+                linear-gradient(to right, rgba(var(--color-stamp-rgb), 0.15) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(var(--color-stamp-rgb), 0.15) 1px, transparent 1px),
+                linear-gradient(45deg, transparent 49%, rgba(var(--color-stamp-rgb), 0.1) 50%, transparent 51%),
+                linear-gradient(-45deg, transparent 49%, rgba(var(--color-stamp-rgb), 0.1) 50%, transparent 51%);
+            background-size: 100% 100%;
+        }
+
+        .slot-box.drag-over {
+            background-color: rgba(var(--color-stamp-rgb), 0.05);
+            box-shadow: 0 0 12px rgba(var(--color-stamp-rgb), 0.4);
+            transform: scale(1.03);
+        }
+
+        /* Filled letter seal stamp style (紅章蓋上去) */
+        .slot-box.correct-fill {
+            color: var(--color-stamp);
+            text-shadow: 0 0 1px rgba(var(--color-stamp-rgb), 0.8);
+            animation: stamp-apply 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-style: solid;
+        }
+
+        @keyframes stamp-apply {
+            0% { transform: scale(1.8); opacity: 0; filter: blur(2px); }
+            100% { transform: scale(1); opacity: 1; filter: blur(0); }
+        }
+
+        /* Meaning / Hint section */
+        .meaning-hint {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            color: var(--color-ink);
+            max-width: 600px;
+            margin: 0 auto;
+            border-top: 1px dashed rgba(var(--color-stamp-rgb), 0.15);
+            padding-top: 1rem;
+            font-weight: 500;
+        }
+
+        .meaning-hint strong {
+            color: var(--color-stamp);
+            font-size: 1.1rem;
+        }
+
+        /* Middle feedback display (Correct / Continue Button) */
+        .answer-feedback {
+            display: none;
+            text-align: center;
+            background: rgba(39, 174, 96, 0.08);
+            border: 1px solid var(--color-green);
+            border-radius: 10px;
+            padding: 1.25rem 1rem;
+            margin-bottom: 2rem;
+            animation: scale-up 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes scale-up {
+            0% { transform: scale(0.9); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .feedback-title {
+            color: var(--color-green);
+            font-size: 1.2rem;
+            font-weight: 900;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .feedback-text {
+            font-size: 0.95rem;
+            opacity: 0.85;
+            margin-bottom: 1.1rem;
+            line-height: 1.5;
+            text-align: left;
+            padding: 0 1rem;
+        }
+
+        .btn-next {
+            background: var(--color-stamp);
+            color: var(--bg-paper);
+            border: none;
+            border-radius: 8px;
+            padding: 0.55rem 2.2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: var(--transition);
+            box-shadow: 0 4px 10px rgba(var(--color-stamp-rgb), 0.25);
+        }
+
+        .btn-next:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(var(--color-stamp-rgb), 0.4);
+            background: #90261c;
+        }
+
+        /* Bottom section: Character cards panel */
+        .cards-panel {
+            background: #fffcf5;
+            border: 1px solid rgba(var(--color-stamp-rgb), 0.15);
+            border-radius: 12px;
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .panel-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            opacity: 0.65;
+            text-align: center;
+            margin-bottom: 1.25rem;
+            letter-spacing: 1.5px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.8rem;
+            justify-items: center;
+        }
+
+        /* Character Cards */
+        .char-card {
+            width: 54px;
+            height: 54px;
+            background: #fbf5e6;
+            border: 1px solid #c8b99d;
+            border-bottom: 3px solid #b8a684;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            cursor: grab;
+            color: var(--color-ink);
+            transition: var(--transition);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        .char-card:hover:not(.locked) {
+            transform: translateY(-3px);
+            border-color: var(--color-stamp);
+            box-shadow: 0 5px 12px rgba(var(--color-stamp-rgb), 0.15);
+            background: #fdfbf7;
+        }
+
+        .char-card:active:not(.locked) {
+            cursor: grabbing;
+        }
+
+        .char-card.dragging {
+            opacity: 0.3;
+            transform: scale(0.9);
+        }
+
+        /* Click select mode highlighting */
+        .char-card.selected {
+            border-color: var(--color-stamp);
+            background: #fcf6e5;
+            box-shadow: 0 0 12px rgba(var(--color-stamp-rgb), 0.35);
+            border-bottom-width: 1px;
+            transform: scale(1.05);
+            animation: pulse-card 1.2s infinite alternate;
+        }
+
+        @keyframes pulse-card {
+            0% { box-shadow: 0 0 4px rgba(var(--color-stamp-rgb), 0.2); }
+            100% { box-shadow: 0 0 14px rgba(var(--color-stamp-rgb), 0.5); }
+        }
+
+        .char-card.locked {
+            opacity: 0;
+            pointer-events: none;
+            cursor: default;
+        }
+
+        /* Shake feedback on wrong match */
+        @keyframes wrong-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        .flash-error {
+            animation: wrong-shake 0.2s ease-in-out 2;
+            border-color: var(--color-stamp) !important;
+            box-shadow: 0 0 12px rgba(var(--color-stamp-rgb), 0.6) !important;
+            background: #f6e6e6 !important;
+        }
+
+        /* End game scoreboard victory modal */
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(44, 26, 26, 0.95);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            z-index: 100;
+        }
+
+        .victory-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .victory-card {
+            background: var(--bg-paper);
+            border: 10px double var(--color-stamp);
+            border-radius: 8px;
+            padding: 3.5rem 2rem;
+            max-width: 440px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 15px 45px rgba(0,0,0,0.5);
+            transform: scale(0.9);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .victory-overlay.active .victory-card {
+            transform: scale(1);
+        }
+
+        .victory-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.25rem;
+            color: var(--color-stamp);
+        }
+
+        .victory-card h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--color-stamp);
+            margin-bottom: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .victory-card p {
+            font-size: 1rem;
+            opacity: 0.85;
+            line-height: 1.5;
+            margin-bottom: 2rem;
+        }
+
+        .victory-stats {
+            background: #fffefb;
+            border: 1px solid rgba(var(--color-stamp-rgb), 0.15);
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .victory-stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .v-label {
+            font-size: 0.8rem;
+            opacity: 0.65;
+            margin-bottom: 0.25rem;
+        }
+
+        .v-val {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--color-stamp);
+        }
+
+        .btn-restart {
+            background: var(--color-stamp);
+            color: var(--bg-paper);
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition);
+            box-shadow: 0 4px 12px rgba(var(--color-stamp-rgb), 0.25);
+            font-family: inherit;
+        }
+
+        .btn-restart:hover {
+            background: #90261c;
+            box-shadow: 0 6px 18px rgba(var(--color-stamp-rgb), 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Confetti particles */
+        .sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--color-gold);
+            border-radius: 50%;
+            animation: drop-fall 2.8s infinite linear;
+        }
+
+        @keyframes drop-fall {
+            0% { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(380px) rotate(360deg); opacity: 0; }
+        }
+
+        /* Mobile styling adjustment (RWD) */
+        @media (max-width: 600px) {
+            .page-frame {
+                padding: 1.5rem 1rem;
+                margin: 1rem auto;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: center;
+                text-align: center;
+            }
+
+            .name-row {
+                gap: 0.5rem;
+            }
+
+            .char-box, .slot-box {
+                width: 58px;
+                height: 58px;
+                font-size: 2.2rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 0.5rem;
+            }
+
+            .char-card {
+                width: 46px;
+                height: 46px;
+                font-size: 1.4rem;
+            }
+        }
+
+        /* Back to Map Button */
+        .back-to-map {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            background: var(--bg-paper);
+            border: 1px solid var(--color-stamp);
+            color: var(--color-stamp);
+            padding: 0.4rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: var(--transition);
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        }
+        .back-to-map:hover {
+            background: var(--color-stamp);
+            color: var(--bg-paper);
+            transform: translateY(-1px);
+            box-shadow: 2px 4px 10px rgba(var(--color-stamp-rgb), 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main Parchment Frame container -->
+    <div class="page-frame">
+        
+        <!-- Header area -->
+        <header>
+            <a href="../大冒險地圖/index.html" class="back-to-map">← 回到大地圖</a>
+            <div class="title-area">
+                <h1>台灣歷史人物填空</h1>
+                <div class="sub">拖曳下方字卡，完成歷史人物姓名。</div>
+            </div>
+
+            <div class="dash-controls">
+                <button class="sound-btn" id="soundBtn" title="切換音效">
+                    <span id="soundIcon">🔊</span>
+                </button>
+                <div class="progress-box" id="progressText">第 1 / 5 題</div>
+            </div>
+        </header>
+
+        <!-- Dynamic Idiom Puzzle Area -->
+        <div class="puzzle-display-wrapper">
+            <div class="name-row" id="nameRow">
+                <!-- Populated via Javascript -->
+            </div>
+            
+            <div class="meaning-hint" id="meaningHint">
+                <!-- Hint description -->
+            </div>
+        </div>
+
+        <!-- Correct answer Feedback Overlay -->
+        <div class="answer-feedback" id="feedbackOverlay">
+            <div class="feedback-title">✓ 答對了！</div>
+            <div class="feedback-text" id="feedbackText">事蹟：</div>
+            <button class="btn-next" id="btnNext">下一題</button>
+        </div>
+
+        <!-- Letter pool panel -->
+        <div class="cards-panel">
+            <div class="panel-label">🏮 選擇字卡填入 🏮</div>
+            <div class="cards-grid" id="cardsGrid">
+                <!-- Dynamic cards -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Final Score Victory screen -->
+    <div class="victory-overlay" id="victoryOverlay">
+        <div class="victory-card">
+            <div class="victory-icon">🎓</div>
+            <h2>歷史小達人</h2>
+            <p>恭喜您順利辨識所有台灣重要歷史人物！</p>
+            <div style="color: var(--color-stamp); font-weight: 800; font-size: 1.1rem; margin-bottom: 1.5rem;">
+                🏆 成功獲得「歷史之印」憑證！
+            </div>
+            <div class="victory-stats">
+                <div class="victory-stat-box">
+                    <span class="v-label">完成題數</span>
+                    <span class="v-val">5 / 5</span>
+                </div>
+                <div class="victory-stat-box">
+                    <span class="v-label">累積嘗試</span>
+                    <span class="v-val" id="finalAttempts">0 次</span>
+                </div>
+            </div>
+            <button class="btn-restart" id="btnRestart">重新挑戰</button>
+        </div>
+    </div>
+
+    <!-- JS Logic -->
+    <script>
+        // Taiwanese History Figures Question Pool
+        const QUESTIONS = [
+            { 名字: '鄭成功', 缺字: [1, 2], 答案: ['成', '功'], 意思: '擊敗荷蘭人取得台灣，建立鄭氏政權，被奉為「開台聖王」。' },
+            { 名字: '沈葆楨', 缺字: [1, 2], 答案: ['葆', '楨'], 意思: '牡丹社事件後來台，推行開山撫番，廢除渡台禁令，並興建億載金城。' },
+            { 名字: '劉銘傳', 缺字: [1, 2], 答案: ['銘', '傳'], 意思: '台灣建省後首任巡撫，興建台灣第一條鐵路、清賦事業，推動近代化。' },
+            { 名字: '後藤新平', 缺字: [1, 3], 答案: ['藤', '平'], 意思: '日治初期民政長官，採取「生物學原則」統治，進行土地、人口與林野調查。' },
+            { 名字: '八田與一', 缺字: [1, 3], 答案: ['田', '一'], 意思: '日本土木工程師，設計並建造了嘉南大圳與烏山頭水庫，被稱為「嘉南大圳之父」。' },
+            { 名字: '蔣渭水', 缺字: [1, 2], 答案: ['渭', '水'], 意思: '創立台灣文化協會與台灣民眾黨，發表〈臨床講義〉，被譽為「台灣的孫中山」。' },
+            { 名字: '林獻堂', 缺字: [1, 2], 答案: ['獻', '堂'], 意思: '霧峰林家成員，長期領導台灣議會設置請願運動，被譽為「台灣議會之父」。' },
+            { 名字: '莫那魯道', 缺字: [1, 2], 答案: ['那', '魯'], 意思: '賽德克族馬赫坡社頭目，霧社事件的領導者，反抗日本政府的暴政。' },
+            { 名字: '陳澄波', 缺字: [1, 2], 答案: ['澄', '波'], 意思: '台灣著名油畫家，以《嘉義街外》入選日本帝展，後於二二八事件中遇難。' },
+            { 名字: '郭懷一', 缺字: [1, 2], 答案: ['懷', '一'], 意思: '荷治時期的漢人領袖，因不滿荷蘭人苛徵重稅，於 1652 年發動大規模抗荷事件。' }
+        ];
+
+        // Constants & States
+        const QUESTIONS_COUNT_PER_GAME = 5;
+        let gameQuestions = [];
+        let currentQuestionIndex = 0;
+        
+        let attempts = 0;
+        let correctSlotsFilled = 0;
+        let selectedCharCard = null;
+        let isSoundEnabled = true;
+
+        // Sound Synthesis Setup (Web Audio API)
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!isSoundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            switch (type) {
+                case 'select':
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(520, now);
+                    gain.gain.setValueAtTime(0.04, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.04);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                    break;
+                case 'correct':
+                    // Classical Chinese high bells (Zhi tone, pentatonic)
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, now); // D5
+                    osc.frequency.setValueAtTime(880.00, now + 0.06); // A5
+                    gain.gain.setValueAtTime(0.06, now);
+                    gain.gain.setValueAtTime(0.06, now + 0.06);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                    break;
+                case 'wrong':
+                    // Damp drum / buzzer sound
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(145, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                    break;
+                case 'round-win':
+                    // Small upward chime triad
+                    const triad = [523.25, 659.25, 783.99]; // C, E, G
+                    triad.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.05);
+                        noteGain.gain.setValueAtTime(0.05, now + idx * 0.05);
+                        noteGain.gain.linearRampToValueAtTime(0.001, now + (idx + 1) * 0.05 + 0.05);
+                        noteOsc.start(now + idx * 0.05);
+                        noteOsc.stop(now + (idx + 1) * 0.05 + 0.05);
+                    });
+                    break;
+                case 'game-win':
+                    // Full fanfare melody in pentatonic
+                    const melody = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+                    melody.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+                        
+                        noteOsc.type = 'sine';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        
+                        noteGain.gain.setValueAtTime(0.05, now + idx * 0.08);
+                        noteGain.gain.linearRampToValueAtTime(0.001, now + (idx + 1) * 0.08 + 0.06);
+                        
+                        noteOsc.start(now + idx * 0.08);
+                        noteOsc.stop(now + (idx + 1) * 0.08 + 0.06);
+                    });
+                    break;
+            }
+        }
+
+        // DOM Links
+        const nameRow = document.getElementById('nameRow');
+        const meaningHint = document.getElementById('meaningHint');
+        const progressText = document.getElementById('progressText');
+        const feedbackOverlay = document.getElementById('feedbackOverlay');
+        const feedbackText = document.getElementById('feedbackText');
+        const btnNext = document.getElementById('btnNext');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const victoryOverlay = document.getElementById('victoryOverlay');
+        const finalAttempts = document.getElementById('finalAttempts');
+        
+        const btnRestart = document.getElementById('btnRestart');
+        const soundBtn = document.getElementById('soundBtn');
+        const soundIcon = document.getElementById('soundIcon');
+
+        // Mute Toggle handler
+        soundBtn.addEventListener('click', () => {
+            isSoundEnabled = !isSoundEnabled;
+            if (isSoundEnabled) {
+                soundIcon.textContent = '🔊';
+                initAudio();
+            } else {
+                soundIcon.textContent = '🔇';
+            }
+        });
+
+        // Pull randomized distractors that don't clash with current answers
+        function getDistractorChars(correctAnswers) {
+            const allChars = new Set();
+            QUESTIONS.forEach(q => {
+                for (let char of q.名字) {
+                    allChars.add(char);
+                }
+            });
+            correctAnswers.forEach(ans => allChars.delete(ans));
+            
+            // Shuffle
+            const array = Array.from(allChars).sort(() => Math.random() - 0.5);
+            return array.slice(0, 13);
+        }
+
+        // Start a completely new session
+        function startNewSession() {
+            attempts = 0;
+            currentQuestionIndex = 0;
+            victoryOverlay.classList.remove('active');
+            
+            // Draw 5 random non-repeating questions
+            gameQuestions = [...QUESTIONS]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, QUESTIONS_COUNT_PER_GAME);
+                
+            loadQuestion(0);
+        }
+
+        // Render current question index
+        function loadQuestion(index) {
+            currentQuestionIndex = index;
+            correctSlotsFilled = 0;
+            selectedCharCard = null;
+            
+            feedbackOverlay.style.display = 'none';
+            progressText.textContent = `第 ${index + 1} / ${QUESTIONS_COUNT_PER_GAME} 題`;
+
+            const currentQ = gameQuestions[index];
+            
+            // Draw name slots row
+            nameRow.innerHTML = '';
+            
+            for (let i = 0; i < currentQ.名字.length; i++) {
+                const isMissing = currentQ.缺字.includes(i);
+                
+                if (isMissing) {
+                    // Create Drop Zone Slot
+                    const slot = document.createElement('div');
+                    slot.classList.add('slot-box');
+                    slot.dataset.slotIndex = i;
+                    
+                    // Determine answer mapping
+                    const answerIndex = currentQ.缺字.indexOf(i);
+                    slot.dataset.correctChar = currentQ.答案[answerIndex];
+
+                    // Drag Events
+                    slot.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                    });
+                    slot.addEventListener('dragenter', (e) => {
+                        e.preventDefault();
+                        if (!slot.classList.contains('correct-fill')) {
+                            slot.classList.add('drag-over');
+                        }
+                    });
+                    slot.addEventListener('dragleave', () => {
+                        slot.classList.remove('drag-over');
+                    });
+                    slot.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        slot.classList.remove('drag-over');
+                        const char = e.dataTransfer.getData('text/plain');
+                        const cardId = e.dataTransfer.getData('card-id');
+                        handleMatchAttempt(char, cardId, slot);
+                    });
+
+                    // Mobile Click-to-Select Fallback
+                    slot.addEventListener('click', () => {
+                        if (selectedCharCard) {
+                            const char = selectedCharCard.dataset.char;
+                            const cardId = selectedCharCard.id;
+                            const success = handleMatchAttempt(char, cardId, slot);
+                            if (success) {
+                                deselectCharCard();
+                            }
+                        }
+                    });
+
+                    nameRow.appendChild(slot);
+                } else {
+                    // Normal static character card box
+                    const charBox = document.createElement('div');
+                    charBox.classList.add('char-box');
+                    charBox.textContent = currentQ.名字[i];
+                    nameRow.appendChild(charBox);
+                }
+            }
+
+            // Draw Meaning Hint
+            meaningHint.innerHTML = `💡 <strong>歷史事蹟：</strong>${currentQ.意思}`;
+
+            // Gather distractor letters
+            const correctAnswers = currentQ.答案;
+            const distractorChars = getDistractorChars(correctAnswers);
+
+            // Assemble and shuffle pool (15 total: 2 correct + 13 distractors)
+            const cardData = [];
+            correctAnswers.forEach((char, subIdx) => {
+                cardData.push({ char: char, id: `c-correct-${subIdx}` });
+            });
+            distractorChars.forEach((char, idx) => {
+                cardData.push({ char: char, id: `c-distract-${idx}` });
+            });
+
+            // Shuffle
+            cardData.sort(() => Math.random() - 0.5);
+
+            // Populate letter card bank HTML grid
+            cardsGrid.innerHTML = '';
+            cardData.forEach(item => {
+                const card = document.createElement('div');
+                card.classList.add('char-card');
+                card.id = item.id;
+                card.dataset.char = item.char;
+                card.textContent = item.char;
+                card.draggable = true;
+
+                // Drag Start
+                card.addEventListener('dragstart', (e) => {
+                    initAudio();
+                    card.classList.add('dragging');
+                    e.dataTransfer.setData('text/plain', item.char);
+                    e.dataTransfer.setData('card-id', item.id);
+                    deselectCharCard();
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                });
+
+                // Click select alternate handler
+                card.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    initAudio();
+
+                    if (selectedCharCard === card) {
+                        deselectCharCard();
+                    } else {
+                        if (selectedCharCard) {
+                            selectedCharCard.classList.remove('selected');
+                        }
+                        selectedCharCard = card;
+                        card.classList.add('selected');
+                        playSound('select');
+                    }
+                });
+
+                cardsGrid.appendChild(card);
+            });
+        }
+
+        // Deselect Clicked Character Card
+        function deselectCharCard() {
+            if (selectedCharCard) {
+                selectedCharCard.classList.remove('selected');
+                selectedCharCard = null;
+            }
+        }
+
+        // Global click clears card selection
+        document.body.addEventListener('click', () => {
+            deselectCharCard();
+        });
+
+        // Match attempt logic
+        function handleMatchAttempt(char, cardId, slotBoxEl) {
+            if (slotBoxEl.classList.contains('correct-fill')) return false;
+
+            attempts++;
+
+            const correctChar = slotBoxEl.dataset.correctChar;
+            const correspondingCard = document.getElementById(cardId);
+
+            if (char === correctChar) {
+                // Correct Match
+                playSound('correct');
+                
+                // Set red seal stamp styling (紅章蓋上去)
+                slotBoxEl.classList.add('correct-fill');
+                slotBoxEl.textContent = char;
+
+                // Remove/Lock corresponding card in the bottom grid
+                if (correspondingCard) {
+                    correspondingCard.classList.add('locked');
+                    correspondingCard.draggable = false;
+                }
+
+                correctSlotsFilled++;
+
+                // Check if all empty grids are successfully completed
+                const totalSlotsNeeded = gameQuestions[currentQuestionIndex].缺字.length;
+                if (correctSlotsFilled === totalSlotsNeeded) {
+                    triggerRoundSuccess();
+                }
+                return true;
+            } else {
+                // Incorrect Match: Flash shake styling
+                playSound('wrong');
+                slotBoxEl.classList.add('flash-error');
+                
+                if (correspondingCard) {
+                    correspondingCard.classList.add('flash-error');
+                }
+
+                setTimeout(() => {
+                    slotBoxEl.classList.remove('flash-error');
+                    if (correspondingCard) {
+                        correspondingCard.classList.remove('flash-error');
+                    }
+                }, 300);
+
+                return false;
+            }
+        }
+
+        // Trigger Round Complete
+        function triggerRoundSuccess() {
+            playSound('round-win');
+            
+            // Hide bottom letter panel
+            document.querySelector('.cards-panel').style.display = 'none';
+
+            // Show explanation review panel
+            feedbackText.textContent = gameQuestions[currentQuestionIndex].意思;
+            feedbackOverlay.style.display = 'block';
+        }
+
+        // Next Question action trigger
+        btnNext.addEventListener('click', () => {
+            // Restore bottom cards panel
+            document.querySelector('.cards-panel').style.display = 'block';
+
+            if (currentQuestionIndex + 1 < QUESTIONS_COUNT_PER_GAME) {
+                loadQuestion(currentQuestionIndex + 1);
+            } else {
+                triggerVictory();
+            }
+        });
+
+        // Trigger end of game statistics screen
+        function triggerVictory() {
+            playSound('game-win');
+            finalAttempts.textContent = `${attempts} 次`;
+            localStorage.setItem('cert_idiom', 'true');
+            
+            // Spawn gold sparkles
+            const card = document.querySelector('.victory-card');
+            for (let i = 0; i < 40; i++) {
+                const conf = document.createElement('div');
+                conf.style.left = Math.random() * 100 + '%';
+                conf.style.top = -10 - Math.random() * 50 + 'px';
+                conf.style.animationDelay = Math.random() * 2 + 's';
+                conf.style.background = Math.random() > 0.5 ? 'var(--color-stamp)' : 'var(--color-gold)';
+                conf.classList.add('sparkle');
+                card.appendChild(conf);
+            }
+
+            setTimeout(() => {
+                victoryOverlay.classList.add('active');
+            }, 600);
+        }
+
+        // Bind restart buttons
+        btnRestart.addEventListener('click', startNewSession);
+
+        // Load Session on start
+        startNewSession();
+    </script>
+</body>
+</html>
